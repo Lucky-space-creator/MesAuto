@@ -4,10 +4,17 @@ import request from '@/utils/request'
 export const useUserStore = defineStore('user', {
   state: () => ({
     token: localStorage.getItem('token') || '',
-    userInfo: JSON.parse(localStorage.getItem('userInfo') || 'null')
+    userInfo: JSON.parse(localStorage.getItem('userInfo') || 'null'),
+    permissions: JSON.parse(localStorage.getItem('permissions') || '[]')
   }),
   getters: {
-    isLoggedIn: (state) => !!state.token
+    isLoggedIn: (state) => !!state.token,
+    // 是否拥有指定权限码（支持单个或多个，传数组时任一满足即可）
+    hasPerm: (state) => (code) => {
+      if (!code) return true
+      if (Array.isArray(code)) return code.some(c => state.permissions.includes(c))
+      return state.permissions.includes(code)
+    }
   },
   actions: {
     async login(username, password) {
@@ -18,8 +25,10 @@ export const useUserStore = defineStore('user', {
         username: data.username,
         realName: data.realName
       }
+      this.permissions = Array.isArray(data.permissions) ? data.permissions : []
       localStorage.setItem('token', data.token)
       localStorage.setItem('userInfo', JSON.stringify(this.userInfo))
+      localStorage.setItem('permissions', JSON.stringify(this.permissions))
       return data
     },
     async logout() {
@@ -30,8 +39,10 @@ export const useUserStore = defineStore('user', {
       }
       this.token = ''
       this.userInfo = null
+      this.permissions = []
       localStorage.removeItem('token')
       localStorage.removeItem('userInfo')
+      localStorage.removeItem('permissions')
     }
   }
 })

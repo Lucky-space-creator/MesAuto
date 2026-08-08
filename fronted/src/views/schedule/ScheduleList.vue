@@ -8,8 +8,8 @@
           <el-radio-button value="station">工位</el-radio-button>
           <el-radio-button value="center">工作中心</el-radio-button>
         </el-radio-group>
-        <el-button v-if="activeTab === 'station'" type="success" :icon="Plus" @click="openStation()">新增工位</el-button>
-        <el-button v-if="activeTab === 'center'" type="success" :icon="Plus" @click="openCenter()">新增工作中心</el-button>
+        <el-button v-if="activeTab === 'station' && can('schedule:station:add')" type="success" :icon="Plus" @click="openStation()">新增工位</el-button>
+        <el-button v-if="activeTab === 'center' && can('schedule:center:add')" type="success" :icon="Plus" @click="openCenter()">新增工作中心</el-button>
       </div>
     </template>
 
@@ -114,6 +114,9 @@ import { ref, reactive, onMounted } from 'vue'
 import request from '@/utils/request'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, VideoPlay, EditPen, Select } from '@element-plus/icons-vue'
+import { usePerm } from '@/composables/usePerm'
+
+const { can } = usePerm()
 
 const activeTab = ref('plan')
 const loadingPlan = ref(false)

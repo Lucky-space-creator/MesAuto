@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { useUserStore } from '@/store/user'
 
 const routes = [
   {
@@ -111,12 +112,40 @@ const router = createRouter({
   routes
 })
 
+// 路由路径 -> 所需权限码（用于导航守卫拦截无权限访问）
+const pathPermMap = {
+  '/material': 'material:list',
+  '/material/category': 'material:category',
+  '/order': 'order:list',
+  '/order/erp-sync': 'order:erp',
+  '/approval/todo': 'approval:todo',
+  '/approval/launch': 'approval:launch',
+  '/approval/template': 'approval:template',
+  '/purchase/requisition': 'purchase:requisition',
+  '/warehouse': 'warehouse:inventory',
+  '/process': 'process:route',
+  '/schedule': 'schedule:plan',
+  '/system/user': 'system:user',
+  '/system/role': 'system:role',
+  '/system/permission': 'system:perm'
+}
+
 router.beforeEach((to, from, next) => {
   const token = localStorage.getItem('token')
   if (!to.meta.public && !token) {
     next('/login')
   } else if (to.path === '/login' && token) {
     next('/')
+  } else if (token) {
+    const required = pathPermMap[to.path]
+    if (required) {
+      const userStore = useUserStore()
+      if (!userStore.hasPerm(required)) {
+        next('/')
+        return
+      }
+    }
+    next()
   } else {
     next()
   }

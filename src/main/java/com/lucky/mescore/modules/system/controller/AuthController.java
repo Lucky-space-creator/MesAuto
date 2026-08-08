@@ -47,6 +47,7 @@ public class AuthController {
         vo.setUserId(user.getId());
         vo.setUsername(user.getUsername());
         vo.setRealName(user.getRealName());
+        vo.setPermissions(userService.getUserPermissions(user.getId()));
         return R.ok(vo);
     }
 

@@ -3,43 +3,15 @@
     <el-aside width="220px" class="aside">
       <div class="logo">MES 控制台</div>
       <el-menu :default-active="activeMenu" router class="menu" background-color="#001529" text-color="#fff" active-text-color="#409eff">
-        <el-menu-item index="/dashboard">
-          <el-icon><Odometer /></el-icon><span>工作台</span>
+        <el-menu-item v-for="m in visibleMenus" :key="m.index" :index="m.index">
+          <el-icon v-if="m.icon"><component :is="m.icon" /></el-icon>
+          <span>{{ m.title }}</span>
         </el-menu-item>
-        <el-sub-menu index="material">
-          <template #title><el-icon><Box /></el-icon><span>物料管理</span></template>
-          <el-menu-item index="/material">物料列表</el-menu-item>
-          <el-menu-item index="/material/category">物料分类</el-menu-item>
-        </el-sub-menu>
-        <el-sub-menu index="order">
-          <template #title><el-icon><Document /></el-icon><span>订单管理</span></template>
-          <el-menu-item index="/order">生产订单</el-menu-item>
-          <el-menu-item index="/order/erp-sync">ERP订单同步</el-menu-item>
-        </el-sub-menu>
-        <el-sub-menu index="approval">
-          <template #title><el-icon><Stamp /></el-icon><span>审批中心</span></template>
-          <el-menu-item index="/approval/todo">待办审批</el-menu-item>
-          <el-menu-item index="/approval/launch">发起审批</el-menu-item>
-          <el-menu-item index="/approval/template">审批模板</el-menu-item>
-        </el-sub-menu>
-        <el-sub-menu index="purchase">
-          <template #title><el-icon><ShoppingCart /></el-icon><span>采购管理</span></template>
-          <el-menu-item index="/purchase/requisition">采购申请</el-menu-item>
-        </el-sub-menu>
-        <el-menu-item index="/warehouse">
-          <el-icon><House /></el-icon><span>仓库管理</span>
-        </el-menu-item>
-        <el-menu-item index="/process">
-          <el-icon><Operation /></el-icon><span>工艺路线</span>
-        </el-menu-item>
-        <el-menu-item index="/schedule">
-          <el-icon><Calendar /></el-icon><span>生产排产</span>
-        </el-menu-item>
-        <el-sub-menu index="system">
-          <template #title><el-icon><Setting /></el-icon><span>系统管理</span></template>
-          <el-menu-item index="/system/user">用户管理</el-menu-item>
-          <el-menu-item index="/system/role">角色管理</el-menu-item>
-          <el-menu-item index="/system/permission">权限管理</el-menu-item>
+        <el-sub-menu v-for="g in visibleGroups" :key="g.index" :index="g.index">
+          <template #title><el-icon v-if="g.icon"><component :is="g.icon" /></el-icon><span>{{ g.title }}</span></template>
+          <el-menu-item v-for="m in g.children" :key="m.index" :index="m.index">
+            <span>{{ m.title }}</span>
+          </el-menu-item>
         </el-sub-menu>
       </el-menu>
     </el-aside>
@@ -72,6 +44,67 @@ const userStore = useUserStore()
 const activeMenu = computed(() => route.path)
 const currentTitle = computed(() => route.meta.title || 'MES')
 const userName = computed(() => userStore.userInfo?.realName || userStore.userInfo?.username || '未登录')
+
+// 菜单定义：perm 为该菜单所需的权限码（无 perm 表示所有人可见，如工作台）
+const menuGroups = [
+  {
+    index: 'material', title: '物料管理', icon: 'Box', perm: 'material',
+    children: [
+      { index: '/material', title: '物料列表', perm: 'material:list' },
+      { index: '/material/category', title: '物料分类', perm: 'material:category' }
+    ]
+  },
+  {
+    index: 'order', title: '订单管理', icon: 'Document', perm: 'order',
+    children: [
+      { index: '/order', title: '生产订单', perm: 'order:list' },
+      { index: '/order/erp-sync', title: 'ERP订单同步', perm: 'order:erp' }
+    ]
+  },
+  {
+    index: 'approval', title: '审批中心', icon: 'Stamp', perm: 'approval',
+    children: [
+      { index: '/approval/todo', title: '待办审批', perm: 'approval:todo' },
+      { index: '/approval/launch', title: '发起审批', perm: 'approval:launch' },
+      { index: '/approval/template', title: '审批模板', perm: 'approval:template' }
+    ]
+  },
+  {
+    index: 'purchase', title: '采购管理', icon: 'ShoppingCart', perm: 'purchase',
+    children: [
+      { index: '/purchase/requisition', title: '采购申请', perm: 'purchase:requisition' }
+    ]
+  },
+  {
+    index: 'system', title: '系统管理', icon: 'Setting', perm: 'system',
+    children: [
+      { index: '/system/user', title: '用户管理', perm: 'system:user' },
+      { index: '/system/role', title: '角色管理', perm: 'system:role' },
+      { index: '/system/permission', title: '权限管理', perm: 'system:perm' }
+    ]
+  }
+]
+
+const singleMenus = [
+  { index: '/dashboard', title: '工作台', icon: 'Odometer' },
+  { index: '/warehouse', title: '仓库管理', icon: 'House', perm: 'warehouse:inventory' },
+  { index: '/process', title: '工艺路线', icon: 'Operation', perm: 'process:route' },
+  { index: '/schedule', title: '生产排产', icon: 'Calendar', perm: 'schedule:plan' }
+]
+
+const iconMap = { Odometer, Box, Document, Stamp, House, Operation, Calendar, Setting, ShoppingCart }
+
+const canShow = (perm) => !perm || userStore.hasPerm(perm)
+
+const visibleGroups = computed(() =>
+  menuGroups
+    .filter(g => canShow(g.perm))
+    .map(g => ({ ...g, icon: iconMap[g.icon], children: g.children.filter(c => canShow(c.perm)) }))
+    .filter(g => g.children.length > 0)
+)
+const visibleMenus = computed(() =>
+  singleMenus.filter(m => canShow(m.perm)).map(m => ({ ...m, icon: iconMap[m.icon] }))
+)
 
 const handleLogout = async () => {
   await ElMessageBox.confirm('确认退出登录？', '提示', { type: 'warning' }).catch(() => Promise.reject())

@@ -8,4 +8,5 @@ public class LoginVO {
     private Long userId;
     private String username;
     private String realName;
+    private java.util.Set<String> permissions;
 }

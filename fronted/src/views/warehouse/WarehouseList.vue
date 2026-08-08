@@ -8,7 +8,7 @@
           <el-radio-button value="inbound">入库单</el-radio-button>
           <el-radio-button value="outbound">出库单</el-radio-button>
         </el-radio-group>
-        <el-button v-if="activeTab === 'warehouse'" type="success" :icon="Plus" @click="openWhDialog()">新增仓库</el-button>
+        <el-button v-if="activeTab === 'warehouse' && can('warehouse:add')" type="success" :icon="Plus" @click="openWhDialog()">新增仓库</el-button>
       </div>
     </template>
 
@@ -24,7 +24,7 @@
         <el-table-column label="操作" width="160" fixed="right">
           <template #default="{ row }">
             <el-button link type="primary" :icon="View" @click="viewLocations(row)">库位</el-button>
-            <el-button link type="danger" :icon="Delete" @click="deleteWh(row)">删除</el-button>
+            <el-button link type="danger" :icon="Delete" v-if="can('warehouse:del')" @click="deleteWh(row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -109,6 +109,9 @@ import { ref, reactive, onMounted } from 'vue'
 import request from '@/utils/request'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, View, Delete } from '@element-plus/icons-vue'
+import { usePerm } from '@/composables/usePerm'
+
+const { can } = usePerm()
 
 const activeTab = ref('warehouse')
 const loading = ref(false)

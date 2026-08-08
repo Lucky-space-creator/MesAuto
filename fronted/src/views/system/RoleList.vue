@@ -3,7 +3,7 @@
     <template #header>
       <div class="toolbar">
         <span>角色管理</span>
-        <el-button type="success" :icon="Plus" @click="openDialog()">新增角色</el-button>
+        <el-button type="success" :icon="Plus" v-if="can('system:role:add')" @click="openDialog()">新增角色</el-button>
       </div>
     </template>
 
@@ -16,9 +16,9 @@
       </el-table-column>
       <el-table-column label="操作" width="220" fixed="right">
         <template #default="{ row }">
-          <el-button link type="primary" :icon="Edit" @click="openDialog(row)">编辑</el-button>
+          <el-button link type="primary" :icon="Edit" v-if="can('system:role:edit')" @click="openDialog(row)">编辑</el-button>
           <el-button link type="warning" :icon="Setting" @click="openPerm(row)">授权</el-button>
-          <el-button link type="danger" :icon="Delete" @click="handleDelete(row)">删除</el-button>
+          <el-button link type="danger" :icon="Delete" v-if="can('system:role:del')" @click="handleDelete(row)">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -61,6 +61,9 @@ import { ref, reactive, onMounted } from 'vue'
 import request from '@/utils/request'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Edit, Setting, Delete } from '@element-plus/icons-vue'
+import { usePerm } from '@/composables/usePerm'
+
+const { can } = usePerm()
 
 const loading = ref(false)
 const tableData = ref([])

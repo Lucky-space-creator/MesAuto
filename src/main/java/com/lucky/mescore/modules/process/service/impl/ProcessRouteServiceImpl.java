@@ -38,6 +38,9 @@ public class ProcessRouteServiceImpl extends ServiceImpl<ProcessRouteMapper, Pro
             for (ProcessStep step : steps) {
                 step.setRouteId(route.getId());
                 if (step.getStepSeq() == null) step.setStepSeq(i);
+                if (step.getStepCode() == null || step.getStepCode().isEmpty()) {
+                    step.setStepCode("SC-" + route.getId() + "-" + i);
+                }
                 stepMapper.insert(step);
                 i++;
             }
@@ -55,6 +58,9 @@ public class ProcessRouteServiceImpl extends ServiceImpl<ProcessRouteMapper, Pro
                 step.setId(null);
                 step.setRouteId(route.getId());
                 if (step.getStepSeq() == null) step.setStepSeq(i);
+                if (step.getStepCode() == null || step.getStepCode().isEmpty()) {
+                    step.setStepCode("SC-" + route.getId() + "-" + i);
+                }
                 stepMapper.insert(step);
                 i++;
             }

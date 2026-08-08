@@ -222,3 +222,74 @@ INSERT INTO mes_approval_template (id, tenant_id, template_code, template_name, 
 INSERT INTO mes_approval_node (template_id, node_seq, node_name, assignee_type, assignee_id) VALUES
 (3, 10, '采购主管审批', 'ROLE', 2),
 (3, 20, '财务审批', 'ROLE', 3);
+
+-- ============================================
+-- 七、补充前端页面菜单权限（erp同步/发起审批/采购申请）
+-- ============================================
+INSERT INTO sys_permission (id, tenant_id, parent_id, perm_code, perm_name, perm_type, url, sort) VALUES
+(90, 'DEFAULT', 50, 'order:erp', 'ERP订单同步', 'MENU', '/order/erp-sync', 30),
+(91, 'DEFAULT', 60, 'approval:launch', '发起审批', 'MENU', '/approval/launch', 15),
+(92, 'DEFAULT', 0, 'purchase', '采购管理', 'MENU', '/purchase', 9),
+(93, 'DEFAULT', 92, 'purchase:requisition', '采购申请', 'MENU', '/purchase/requisition', 10),
+(94, 'DEFAULT', 92, 'purchase:add', '新增采购申请', 'BTN', '', 1),
+(95, 'DEFAULT', 92, 'purchase:submit', '提交采购审批', 'BTN', '', 2),
+(96, 'DEFAULT', 92, 'purchase:del', '删除采购申请', 'BTN', '', 3);
+
+-- 管理员拥有全部权限（含新增菜单）
+INSERT INTO sys_role_permission (role_id, permission_id)
+SELECT 1, id FROM sys_permission WHERE id BETWEEN 90 AND 96;
+
+-- 生产经理额外授权：ERP同步、发起审批、采购申请
+INSERT INTO sys_role_permission (role_id, permission_id) VALUES
+(2, 90), (2, 91), (2, 92), (2, 93), (2, 94), (2, 95), (2, 96);
+
+-- ============================================
+-- 八、补充按钮级权限（仓库/审批模板/物料分类/权限/角色/排程）
+-- ============================================
+INSERT INTO sys_permission (id, tenant_id, parent_id, perm_code, perm_name, perm_type, url, sort) VALUES
+-- 审批模板
+(100, 'DEFAULT', 63, 'approval:template:add', '新增模板', 'BTN', '', 1),
+(101, 'DEFAULT', 63, 'approval:template:edit', '编辑模板', 'BTN', '', 2),
+(102, 'DEFAULT', 63, 'approval:template:del', '删除模板', 'BTN', '', 3),
+(103, 'DEFAULT', 63, 'approval:template:publish', '发布模板', 'BTN', '', 4),
+-- 仓储管理
+(104, 'DEFAULT', 80, 'warehouse:add', '新增仓库', 'BTN', '', 1),
+(105, 'DEFAULT', 80, 'warehouse:del', '删除仓库', 'BTN', '', 2),
+-- 物料分类
+(106, 'DEFAULT', 21, 'material:category:add', '新增分类', 'BTN', '', 1),
+(107, 'DEFAULT', 21, 'material:category:edit', '编辑分类', 'BTN', '', 2),
+(108, 'DEFAULT', 21, 'material:category:del', '删除分类', 'BTN', '', 3),
+-- 角色管理
+(109, 'DEFAULT', 6, 'system:role:del', '删除角色', 'BTN', '', 3),
+-- 权限管理
+(110, 'DEFAULT', 9, 'system:perm:add', '新增权限', 'BTN', '', 1),
+(111, 'DEFAULT', 9, 'system:perm:edit', '编辑权限', 'BTN', '', 2),
+(112, 'DEFAULT', 9, 'system:perm:del', '删除权限', 'BTN', '', 3),
+-- 排程管理
+(113, 'DEFAULT', 70, 'schedule:station:add', '新增工位', 'BTN', '', 1),
+(114, 'DEFAULT', 70, 'schedule:center:add', '新增工作中心', 'BTN', '', 2);
+
+-- 管理员拥有全部权限
+INSERT INTO sys_role_permission (role_id, permission_id)
+SELECT 1, id FROM sys_permission WHERE id BETWEEN 100 AND 114;
+
+-- 生产经理授权（不含权限管理）
+INSERT INTO sys_role_permission (role_id, permission_id) VALUES
+(2, 100), (2, 101), (2, 102), (2, 103),
+(2, 104), (2, 105),
+(2, 106), (2, 107), (2, 108),
+(2, 109),
+(2, 113), (2, 114);
+
+-- ============================================
+-- 九、补充订单操作按钮权限
+-- ============================================
+INSERT INTO sys_permission (id, tenant_id, parent_id, perm_code, perm_name, perm_type, url, sort) VALUES
+(115, 'DEFAULT', 51, 'order:start', '订单开工', 'BTN', '', 7),
+(116, 'DEFAULT', 51, 'order:finish', '订单完工', 'BTN', '', 8);
+
+INSERT INTO sys_role_permission (role_id, permission_id)
+SELECT 1, id FROM sys_permission WHERE id BETWEEN 115 AND 116;
+
+INSERT INTO sys_role_permission (role_id, permission_id) VALUES
+(2, 115), (2, 116);

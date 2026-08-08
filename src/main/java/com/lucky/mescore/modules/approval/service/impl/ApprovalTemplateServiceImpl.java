@@ -29,10 +29,13 @@ public class ApprovalTemplateServiceImpl extends ServiceImpl<ApprovalTemplateMap
     public void saveTemplateWithNodes(ApprovalTemplate template, List<ApprovalNode> nodes) {
         save(template);
         if (nodes != null && !nodes.isEmpty()) {
-            nodes.forEach(node -> {
+            int i = 1;
+            for (ApprovalNode node : nodes) {
                 node.setTemplateId(template.getId());
+                if (node.getNodeSeq() == null) node.setNodeSeq(i);
                 nodeMapper.insert(node);
-            });
+                i++;
+            }
         }
     }
 

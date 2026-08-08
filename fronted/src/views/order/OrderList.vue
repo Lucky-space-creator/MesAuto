@@ -23,8 +23,8 @@
           </el-form-item>
         </el-form>
         <div>
-          <el-button type="success" :icon="Plus" @click="openDialog()">新建订单</el-button>
-          <el-button type="warning" :icon="Link" @click="goErpSync">ERP同步</el-button>
+          <el-button type="success" :icon="Plus" v-if="can('order:add')" @click="openDialog()">新建订单</el-button>
+          <el-button type="warning" :icon="Link" v-if="can('order:erp')" @click="goErpSync">ERP同步</el-button>
         </div>
       </div>
     </template>
@@ -61,17 +61,17 @@
         <template #default="{ row }">
           <el-button link type="primary" :icon="View" @click="openDetail(row)">详情</el-button>
           <el-button link type="warning" :icon="Stamp"
-            v-if="row.orderStatus === 'DRAFT'" @click="submitApproval(row)">提交审批</el-button>
+            v-if="row.orderStatus === 'DRAFT' && can('order:submit')" @click="submitApproval(row)">提交审批</el-button>
           <el-button link type="success" :icon="Promotion"
-            v-if="row.orderStatus === 'APPROVING'" @click="release(row)">审批通过下达</el-button>
+            v-if="row.orderStatus === 'APPROVING' && can('order:release')" @click="release(row)">审批通过下达</el-button>
           <el-button link type="success" :icon="VideoPlay"
-            v-if="row.orderStatus === 'RELEASED'" @click="start(row)">开工</el-button>
+            v-if="row.orderStatus === 'RELEASED' && can('order:start')" @click="start(row)">开工</el-button>
           <el-button link type="success" :icon="Finished"
-            v-if="row.orderStatus === 'IN_PRODUCTION'" @click="finish(row)">完工</el-button>
+            v-if="row.orderStatus === 'IN_PRODUCTION' && can('order:finish')" @click="finish(row)">完工</el-button>
           <el-button link type="danger" :icon="CircleClose"
-            v-if="['APPROVING','RELEASED','IN_PRODUCTION','PENDING_STORAGE'].includes(row.orderStatus)" @click="close(row)">关闭</el-button>
+            v-if="['APPROVING','RELEASED','IN_PRODUCTION','PENDING_STORAGE'].includes(row.orderStatus) && can('order:close')" @click="close(row)">关闭</el-button>
           <el-button link type="danger" :icon="Delete"
-            v-if="row.orderStatus === 'DRAFT'" @click="handleDelete(row)">删除</el-button>
+            v-if="row.orderStatus === 'DRAFT' && can('order:del')" @click="handleDelete(row)">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -200,8 +200,10 @@ import request from '@/utils/request'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, Refresh, Plus, View, Stamp, Delete, Link,
          Promotion, VideoPlay, Finished, CircleClose } from '@element-plus/icons-vue'
+import { usePerm } from '@/composables/usePerm'
 
 const router = useRouter()
+const { can } = usePerm()
 
 const statusOptions = [
   { value: 'DRAFT', label: '草稿' },

@@ -163,7 +163,7 @@ public class ApprovalController {
 
     @PostMapping("/api/approval-template")
     public R<ApprovalTemplate> createTemplate(@RequestBody ApprovalTemplate template) {
-        templateService.saveTemplateWithNodes(template, null);
+        templateService.saveTemplateWithNodes(template, template.getNodes());
         return R.ok(template);
     }
 

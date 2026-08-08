@@ -17,7 +17,7 @@
             <el-button :icon="Refresh" @click="resetQuery">重置</el-button>
           </el-form-item>
         </el-form>
-        <el-button type="success" :icon="Plus" @click="openDialog()">新增采购申请</el-button>
+        <el-button type="success" :icon="Plus" @click="openDialog()" v-if="can('purchase:add')">新增采购申请</el-button>
       </div>
     </template>
 
@@ -35,9 +35,9 @@
       </el-table-column>
       <el-table-column label="操作" width="240" fixed="right">
         <template #default="{ row }">
-          <el-button v-if="['DRAFT','REJECTED'].includes(row.reqStatus)" link type="success" :icon="Promotion" @click="submitApproval(row)">提交审批</el-button>
-          <el-button link type="primary" :icon="Edit" @click="openDialog(row)">编辑</el-button>
-          <el-button link type="danger" :icon="Delete" @click="handleDelete(row)">删除</el-button>
+          <el-button v-if="['DRAFT','REJECTED'].includes(row.reqStatus) && can('purchase:submit')" link type="success" :icon="Promotion" @click="submitApproval(row)">提交审批</el-button>
+          <el-button link type="primary" :icon="Edit" @click="openDialog(row)" v-if="can('purchase:add')">编辑</el-button>
+          <el-button link type="danger" :icon="Delete" @click="handleDelete(row)" v-if="can('purchase:del')">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -75,6 +75,9 @@ import { ref, reactive, onMounted } from 'vue'
 import request from '@/utils/request'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, Refresh, Plus, Promotion, Edit, Delete } from '@element-plus/icons-vue'
+import { usePerm } from '@/composables/usePerm'
+
+const { can } = usePerm()
 
 const loading = ref(false)
 const tableData = ref([])

@@ -3,7 +3,7 @@
     <template #header>
       <div class="toolbar">
         <span>权限管理</span>
-        <el-button type="success" :icon="Plus" @click="openDialog()">新增权限</el-button>
+        <el-button type="success" :icon="Plus" v-if="can('system:perm:add')" @click="openDialog()">新增权限</el-button>
       </div>
     </template>
 
@@ -19,8 +19,8 @@
       <el-table-column prop="sort" label="排序" width="70" />
       <el-table-column label="操作" width="160" fixed="right">
         <template #default="{ row }">
-          <el-button link type="primary" :icon="Edit" @click="openDialog(row)">编辑</el-button>
-          <el-button link type="danger" :icon="Delete" @click="handleDelete(row)">删除</el-button>
+          <el-button link type="primary" :icon="Edit" v-if="can('system:perm:edit')" @click="openDialog(row)">编辑</el-button>
+          <el-button link type="danger" :icon="Delete" v-if="can('system:perm:del')" @click="handleDelete(row)">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -53,6 +53,9 @@ import { ref, reactive, onMounted } from 'vue'
 import request from '@/utils/request'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Edit, Delete } from '@element-plus/icons-vue'
+import { usePerm } from '@/composables/usePerm'
+
+const { can } = usePerm()
 
 const loading = ref(false)
 const tableData = ref([])

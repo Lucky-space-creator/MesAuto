@@ -10,7 +10,7 @@
             <el-button :icon="Refresh" @click="resetQuery">重置</el-button>
           </el-form-item>
         </el-form>
-        <el-button type="success" :icon="Plus" @click="openDialog()">新增工艺路线</el-button>
+        <el-button type="success" :icon="Plus" @click="openDialog()" v-if="can('process:route:add')">新增工艺路线</el-button>
       </div>
     </template>
 
@@ -25,8 +25,8 @@
       <el-table-column label="操作" width="260" fixed="right">
         <template #default="{ row }">
           <el-button link type="primary" :icon="View" @click="viewSteps(row)">工序</el-button>
-          <el-button link type="success" :icon="Promotion" v-if="row.status !== 'PUBLISHED'" @click="publish(row)">发布</el-button>
-          <el-button link type="danger" :icon="Delete" @click="handleDelete(row)">删除</el-button>
+          <el-button link type="success" :icon="Promotion" v-if="row.status !== 'PUBLISHED' && can('process:route:publish')" @click="publish(row)">发布</el-button>
+          <el-button link type="danger" :icon="Delete" @click="handleDelete(row)" v-if="can('process:route:del')">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -104,6 +104,9 @@ import { ref, reactive, onMounted } from 'vue'
 import request from '@/utils/request'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, Refresh, Plus, View, Promotion, Delete } from '@element-plus/icons-vue'
+import { usePerm } from '@/composables/usePerm'
+
+const { can } = usePerm()
 
 const loading = ref(false)
 const tableData = ref([])
