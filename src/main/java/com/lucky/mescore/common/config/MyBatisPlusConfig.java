@@ -173,7 +173,7 @@ public class MyBatisPlusConfig implements Interceptor {
 
     @Override
     public Object plugin(Object target) {
-        return Interceptor.super.plugin(target);
+        return org.apache.ibatis.plugin.Plugin.wrap(target, this);
     }
 
     @Override

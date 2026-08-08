@@ -131,13 +131,6 @@ public class WarehouseController {
         return R.ok(PageResponse.of(page.getTotal(), page.getCurrent(), page.getSize(), page.getRecords()));
     }
 
-    @GetMapping("/api/inventory/log")
-    public R<PageResponse<Object>> inventoryLog(@RequestParam(defaultValue = "1") long pageNum,
-                                               @RequestParam(defaultValue = "10") long pageSize) {
-        // 库存流水表暂未接入写操作，返回空分页避免前端表格报错
-        return R.ok(PageResponse.empty());
-    }
-
     /** 补充库存列表的关联名称（物料/仓库/库位/单位），不影响持久化 */
     private void enrichInventory(List<Inventory> list) {
         if (list == null || list.isEmpty()) return;

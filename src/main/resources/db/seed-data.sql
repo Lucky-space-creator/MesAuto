@@ -26,7 +26,6 @@ TRUNCATE TABLE mes_inbound_item;
 TRUNCATE TABLE mes_inbound_order;
 TRUNCATE TABLE mes_outbound_item;
 TRUNCATE TABLE mes_outbound_order;
-TRUNCATE TABLE mes_inventory_log;
 TRUNCATE TABLE mes_inventory;
 TRUNCATE TABLE mes_process_step;
 TRUNCATE TABLE mes_process_route;
@@ -331,18 +330,6 @@ INSERT INTO mes_outbound_item (outbound_id, material_id, quantity, unit_id, loca
 (2, 21, 1275, 2, 1, '柜体钢板领料'),
 (2, 27, 450,  4, 2, '滑轨领料'),
 (3, 1,  20,   1, 3, '办公椅销售出库');
-
--- 库存流水
-INSERT INTO mes_inventory_log
-(tenant_id, material_id, warehouse_id, location_id, biz_type, biz_no, change_type, change_qty, before_qty, after_qty, unit_id, create_by, remark) VALUES
-('DEFAULT', 21, 1, 1, 'INBOUND',  'MI20260101001',   'IN',  3000,  5500,  8500,  2, 'admin', '采购入库'),
-('DEFAULT', 22, 1, 1, 'INBOUND',  'MI20260101001',   'IN',  2000,  2840,  4840,  3, 'admin', '采购入库'),
-('DEFAULT', 28, 1, 1, 'INBOUND',  'MI20260101001',   'IN',  15000, 19400, 34400, 1, 'admin', '采购入库'),
-('DEFAULT', 22, 1, 1, 'OUTBOUND', 'MOUT20260101001', 'OUT', -640,  4840,  4200,  3, 'admin', '生产领料'),
-('DEFAULT', 21, 1, 1, 'OUTBOUND', 'MOUT20260101001', 'OUT', -240,  8740,  8500,  2, 'admin', '生产领料'),
-('DEFAULT', 28, 1, 1, 'OUTBOUND', 'MOUT20260101001', 'OUT', -2400, 34400, 32000, 1, 'admin', '生产领料'),
-('DEFAULT', 1,  2, 3, 'INBOUND',  'MI20260101002',   'IN',  90,    0,     90,    1, 'admin', '成品入库'),
-('DEFAULT', 1,  2, 3, 'OUTBOUND', 'MOUT20260101003', 'OUT', -25,   90,    65,    1, 'admin', '销售出库');
 
 -- ------------------------------------------------------------
 -- 9. 重置流水号，避免与上面写死的单号冲突

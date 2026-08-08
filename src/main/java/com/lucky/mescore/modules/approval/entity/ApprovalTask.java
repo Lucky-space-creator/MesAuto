@@ -20,6 +20,8 @@ public class ApprovalTask {
     private Long bizId;
     private String assignee;
     private String status;
+    /** Activiti 任务 ID，用于对接 Activiti TaskRuntime API */
+    private String activitiTaskId;
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
 

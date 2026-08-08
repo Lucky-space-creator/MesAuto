@@ -141,6 +141,24 @@ public class ApprovalController {
         return R.ok();
     }
 
+    @PostMapping("/api/approval/{taskId}/delegate")
+    public R<Void> delegate(@PathVariable Long taskId,
+                            @RequestParam String fromUser,
+                            @RequestParam String toUser,
+                            @RequestParam(required = false) String comment) {
+        approvalEngine.delegate(taskId, fromUser, toUser, comment);
+        return R.ok();
+    }
+
+    @PostMapping("/api/approval/{taskId}/add-sign")
+    public R<Void> addSign(@PathVariable Long taskId,
+                           @RequestParam String operator,
+                           @RequestParam String addUser,
+                           @RequestParam(required = false) String comment) {
+        approvalEngine.addSign(taskId, operator, addUser, comment);
+        return R.ok();
+    }
+
     // ===== 审批模板管理 =====
 
     @PostMapping("/api/approval-template/page")

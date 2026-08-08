@@ -35,6 +35,13 @@ spring:
       max-file-size: 100MB
       max-request-size: 100MB
 
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:db/schema.sql
+      data-locations: classpath:db/init-data.sql
+      continue-on-error: true
+
 mybatis-plus:
   mapper-locations: classpath*:mapper/**/*.xml
   type-enums-package: com.lucky.mescore.common.enums

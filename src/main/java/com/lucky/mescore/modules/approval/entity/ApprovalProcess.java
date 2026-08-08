@@ -20,6 +20,8 @@ public class ApprovalProcess {
     private Long currentNodeId;
     private String status;
     private String applicant;
+    /** Activiti 流程实例 ID，用于关联 Activiti 运行时 */
+    private String procInstId;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
     private LocalDateTime createTime;

@@ -6,6 +6,7 @@ import com.lucky.mescore.modules.approval.entity.ApprovalNode;
 import com.lucky.mescore.modules.approval.entity.ApprovalTemplate;
 import com.lucky.mescore.modules.approval.mapper.ApprovalNodeMapper;
 import com.lucky.mescore.modules.approval.mapper.ApprovalTemplateMapper;
+import com.lucky.mescore.modules.approval.service.ApprovalEngineService;
 import com.lucky.mescore.modules.approval.service.ApprovalTemplateService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -18,6 +19,7 @@ import java.util.List;
 public class ApprovalTemplateServiceImpl extends ServiceImpl<ApprovalTemplateMapper, ApprovalTemplate> implements ApprovalTemplateService {
 
     private final ApprovalNodeMapper nodeMapper;
+    private final ApprovalEngineService approvalEngine;
 
     @Override
     public List<ApprovalNode> getNodes(Long templateId) {
@@ -62,5 +64,7 @@ public class ApprovalTemplateServiceImpl extends ServiceImpl<ApprovalTemplateMap
         }
         template.setStatus("PUBLISHED");
         updateById(template);
+        // 发布时自动部署 BPMN 流程定义到 Activiti
+        approvalEngine.deployTemplate(template);
     }
 }

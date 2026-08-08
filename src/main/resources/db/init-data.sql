@@ -67,7 +67,12 @@ INSERT INTO sys_permission (id, tenant_id, parent_id, perm_code, perm_name, perm
 (60, 'DEFAULT', 0, 'approval', '审批管理', 'MENU', '/approval', 6),
 (61, 'DEFAULT', 60, 'approval:todo', '待审批', 'MENU', '/approval/todo', 10),
 (62, 'DEFAULT', 60, 'approval:done', '已审批', 'MENU', '/approval/done', 20),
-(63, 'DEFAULT', 60, 'approval:template', '审批模板', 'MENU', '/approval/template', 30),
+(63, 'DEFAULT', 60, 'approval:launch', '发起审批', 'MENU', '/approval/launch', 25),
+(64, 'DEFAULT', 60, 'approval:template', '审批模板', 'MENU', '/approval/template', 30),
+(65, 'DEFAULT', 64, 'approval:template:add', '新增模板', 'BTN', '', 1),
+(66, 'DEFAULT', 64, 'approval:template:edit', '编辑模板', 'BTN', '', 2),
+(67, 'DEFAULT', 64, 'approval:template:del', '删除模板', 'BTN', '', 3),
+(68, 'DEFAULT', 64, 'approval:template:publish', '发布模板', 'BTN', '', 4),
 
 -- 排程管理
 (70, 'DEFAULT', 0, 'schedule', '生产排程', 'MENU', '/schedule', 7),
@@ -119,16 +124,7 @@ UPDATE sys_user SET password = SHA2(CONCAT('1', 'INIT', 'admin123'), 256), salt 
 INSERT INTO sys_user_role (user_id, role_id) VALUES (1, 1);
 
 -- ============================================
--- 三、系统配置
--- ============================================
-
-INSERT INTO sys_config (tenant_id, config_key, config_value, config_desc) VALUES
-('DEFAULT', 'system.name', 'MES Core', '系统名称'),
-('DEFAULT', 'system.version', '1.0.0', '系统版本'),
-('DEFAULT', 'system.logo', '', '系统Logo');
-
--- ============================================
--- 四、流水号初始化
+-- 三、流水号初始化
 -- ============================================
 
 INSERT INTO sys_serial_number (tenant_id, prefix, biz_type, date_part, current_seq) VALUES
@@ -142,7 +138,7 @@ INSERT INTO sys_serial_number (tenant_id, prefix, biz_type, date_part, current_s
 ('DEFAULT', 'PRQ',  'PURCHASE', DATE_FORMAT(NOW(),'%Y%m%d'), 0);
 
 -- ============================================
--- 五、基础数据初始化
+-- 四、基础数据初始化
 -- ============================================
 
 -- 计量单位

@@ -9,6 +9,7 @@ import com.lucky.mescore.modules.system.dto.LoginDTO;
 import com.lucky.mescore.modules.system.dto.LoginVO;
 import com.lucky.mescore.modules.system.entity.User;
 import com.lucky.mescore.modules.system.service.UserService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.apache.shiro.SecurityUtils;
 import org.springframework.web.bind.annotation.*;
@@ -62,8 +63,13 @@ public class AuthController {
     }
 
     @GetMapping("/info")
-    public R<LoginVO> info() {
-        String token = (String) SecurityUtils.getSubject().getPrincipal();
+    public R<LoginVO> info(HttpServletRequest request) {
+        // 直接从请求头获取 token（前端 Authorization 不带 Bearer 前缀，兼容两种格式）
+        String auth = request.getHeader("Authorization");
+        String token = (auth != null && auth.startsWith("Bearer ")) ? auth.substring(7) : auth;
+        if (token == null) {
+            return R.fail(401, "未登录");
+        }
         Long userId = jwtUtil.getUserId(token);
         if (userId == null) {
             return R.fail(401, "Token已过期");
