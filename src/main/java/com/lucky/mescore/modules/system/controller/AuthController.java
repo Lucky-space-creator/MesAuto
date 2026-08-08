@@ -60,4 +60,24 @@ public class AuthController {
         SecurityUtils.getSubject().logout();
         return R.ok();
     }
+
+    @GetMapping("/info")
+    public R<LoginVO> info() {
+        String token = (String) SecurityUtils.getSubject().getPrincipal();
+        Long userId = jwtUtil.getUserId(token);
+        if (userId == null) {
+            return R.fail(401, "Token已过期");
+        }
+        User user = userService.getById(userId);
+        if (user == null || user.getStatus() == 0) {
+            return R.fail(401, "用户已被禁用");
+        }
+        LoginVO vo = new LoginVO();
+        vo.setToken(token);
+        vo.setUserId(user.getId());
+        vo.setUsername(user.getUsername());
+        vo.setRealName(user.getRealName());
+        vo.setPermissions(userService.getUserPermissions(user.getId()));
+        return R.ok(vo);
+    }
 }

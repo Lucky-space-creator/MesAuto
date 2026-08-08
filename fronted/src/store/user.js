@@ -31,6 +31,30 @@ export const useUserStore = defineStore('user', {
       localStorage.setItem('permissions', JSON.stringify(this.permissions))
       return data
     },
+    async refreshInfo() {
+      if (!this.token) return
+      try {
+        const data = await request.get('/auth/info')
+        this.token = data.token || this.token
+        this.userInfo = {
+          userId: data.userId,
+          username: data.username,
+          realName: data.realName
+        }
+        this.permissions = Array.isArray(data.permissions) ? data.permissions : []
+        localStorage.setItem('token', this.token)
+        localStorage.setItem('userInfo', JSON.stringify(this.userInfo))
+        localStorage.setItem('permissions', JSON.stringify(this.permissions))
+      } catch (e) {
+        // token过期等异常，清除登录状态
+        this.token = ''
+        this.userInfo = null
+        this.permissions = []
+        localStorage.removeItem('token')
+        localStorage.removeItem('userInfo')
+        localStorage.removeItem('permissions')
+      }
+    },
     async logout() {
       try {
         await request.post('/auth/logout')

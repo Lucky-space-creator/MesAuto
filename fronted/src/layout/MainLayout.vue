@@ -31,7 +31,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/store/user'
 import { ElMessageBox } from 'element-plus'
@@ -111,6 +111,17 @@ const handleLogout = async () => {
   await userStore.logout()
   router.replace('/login')
 }
+
+// 页面加载时，如果 token 存在但权限为空，自动从服务端刷新（解决旧 localStorage 残留问题）
+onMounted(async () => {
+  if (userStore.token && userStore.permissions.length === 0) {
+    await userStore.refreshInfo()
+    // 如果刷新后依然无 token（token过期），跳转登录页
+    if (!userStore.token) {
+      router.replace('/login')
+    }
+  }
+})
 </script>
 
 <style scoped>
