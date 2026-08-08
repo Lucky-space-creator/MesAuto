@@ -37,16 +37,34 @@ const routes = [
         meta: { title: '订单管理' }
       },
       {
+        path: 'order/erp-sync',
+        name: 'ErpSync',
+        component: () => import('@/views/order/ErpSync.vue'),
+        meta: { title: 'ERP订单同步' }
+      },
+      {
         path: 'approval/todo',
         name: 'ApprovalTodo',
         component: () => import('@/views/approval/ApprovalTodo.vue'),
         meta: { title: '待办审批' }
       },
       {
+        path: 'approval/launch',
+        name: 'ApprovalLaunch',
+        component: () => import('@/views/approval/ApprovalLaunch.vue'),
+        meta: { title: '发起审批' }
+      },
+      {
         path: 'approval/template',
         name: 'ApprovalTemplate',
         component: () => import('@/views/approval/ApprovalTemplate.vue'),
         meta: { title: '审批模板' }
+      },
+      {
+        path: 'purchase/requisition',
+        name: 'PurchaseRequisition',
+        component: () => import('@/views/purchase/PurchaseRequisition.vue'),
+        meta: { title: '采购申请' }
       },
       {
         path: 'warehouse',

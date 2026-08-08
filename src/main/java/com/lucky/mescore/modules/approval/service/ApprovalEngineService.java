@@ -4,8 +4,10 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.lucky.mescore.common.enums.ApprovalStatusEnum;
 import com.lucky.mescore.common.exception.BusinessException;
 import com.lucky.mescore.modules.approval.entity.*;
+import com.lucky.mescore.modules.approval.event.ApprovalFinishedEvent;
 import com.lucky.mescore.modules.approval.mapper.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,6 +23,7 @@ public class ApprovalEngineService {
     private final ApprovalProcessMapper processMapper;
     private final ApprovalTaskMapper taskMapper;
     private final ApprovalRecordMapper recordMapper;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional(rollbackFor = Exception.class)
     public ApprovalProcess submit(String bizType, Long bizId, String bizNo, String applicant) {
@@ -74,6 +77,9 @@ public class ApprovalEngineService {
             process.setStatus(ApprovalStatusEnum.APPROVED.getCode());
             process.setEndTime(LocalDateTime.now());
             processMapper.updateById(process);
+            // 全部节点通过，通知业务方推进状态机
+            eventPublisher.publishEvent(
+                    new ApprovalFinishedEvent(process.getBizType(), process.getBizId(), true));
         } else {
             process.setCurrentNodeId(nextNode.getId());
             processMapper.updateById(process);
@@ -99,6 +105,10 @@ public class ApprovalEngineService {
 
         ApprovalNode node = nodeMapper.selectById(task.getNodeId());
         recordAction(process.getId(), node.getId(), node.getNodeName(), assignee, "REJECT", comment);
+
+        // 驳回同样通知业务方，让订单退回草稿
+        eventPublisher.publishEvent(
+                new ApprovalFinishedEvent(process.getBizType(), process.getBizId(), false));
     }
 
     private ApprovalTemplate selectTemplate(String bizType, Object orderDTO) {

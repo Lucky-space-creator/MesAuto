@@ -1,5 +1,6 @@
 package com.lucky.mescore.modules.schedule.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.lucky.mescore.common.entity.BaseEntity;
 import lombok.Data;
@@ -18,4 +19,7 @@ public class ProductionPlan extends BaseEntity {
     private BigDecimal completedQty;
     private String planStatus;
     private LocalDate planDate;
+
+    @TableField(exist = false)
+    private String orderNo;
 }

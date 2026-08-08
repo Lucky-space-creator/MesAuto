@@ -5,6 +5,10 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.lucky.mescore.common.page.PageRequest;
 import com.lucky.mescore.common.page.PageResponse;
 import com.lucky.mescore.common.result.R;
+import com.lucky.mescore.modules.material.entity.Material;
+import com.lucky.mescore.modules.material.mapper.MaterialMapper;
+import com.lucky.mescore.modules.order.entity.Order;
+import com.lucky.mescore.modules.order.mapper.OrderMapper;
 import com.lucky.mescore.modules.schedule.entity.*;
 import com.lucky.mescore.modules.schedule.mapper.*;
 import com.lucky.mescore.modules.schedule.service.ScheduleService;
@@ -13,6 +17,11 @@ import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/schedule")
@@ -25,21 +34,24 @@ public class ScheduleController {
     private final ProductionPlanMapper planMapper;
     private final ProductionTaskMapper taskMapper;
     private final TaskReportMapper reportMapper;
+    private final OrderMapper orderMapper;
+    private final MaterialMapper materialMapper;
 
     @PostMapping("/plan")
     public R<ProductionPlan> generatePlan(@RequestParam Long orderId) {
         return R.ok(scheduleService.generatePlan(orderId));
     }
 
-    @GetMapping("/plan/page")
+    @PostMapping("/plan/page")
     public R<PageResponse<ProductionPlan>> planPage(@RequestBody PageRequest<Void> request) {
         Page<ProductionPlan> page = planMapper.selectPage(
                 new Page<>(request.getPageNum(), request.getPageSize()),
                 new LambdaQueryWrapper<ProductionPlan>().orderByDesc(ProductionPlan::getCreateTime));
+        enrichPlan(page.getRecords());
         return R.ok(PageResponse.of(page.getTotal(), page.getCurrent(), page.getSize(), page.getRecords()));
     }
 
-    @GetMapping("/task/page")
+    @PostMapping("/task/page")
     public R<PageResponse<ProductionTask>> taskPage(@RequestBody PageRequest<ProductionTask> request) {
         ProductionTask condition = request.getCondition();
         LambdaQueryWrapper<ProductionTask> qw = new LambdaQueryWrapper<>();
@@ -50,6 +62,7 @@ public class ScheduleController {
         qw.orderByDesc(ProductionTask::getCreateTime);
         Page<ProductionTask> page = taskMapper.selectPage(
                 new Page<>(request.getPageNum(), request.getPageSize()), qw);
+        enrichTask(page.getRecords());
         return R.ok(PageResponse.of(page.getTotal(), page.getCurrent(), page.getSize(), page.getRecords()));
     }
 
@@ -134,5 +147,39 @@ public class ScheduleController {
         center.setId(id);
         workCenterMapper.updateById(center);
         return R.ok();
+    }
+
+    /** 补充计划列表关联订单号 */
+    private void enrichPlan(List<ProductionPlan> list) {
+        if (list == null || list.isEmpty()) return;
+        Set<Long> orderIds = list.stream().map(ProductionPlan::getOrderId).filter(Objects::nonNull).collect(Collectors.toSet());
+        Map<Long, Order> orderMap = orderIds.isEmpty() ? Map.of() :
+                orderMapper.selectBatchIds(orderIds).stream().collect(Collectors.toMap(Order::getId, Function.identity()));
+        for (ProductionPlan r : list) {
+            if (r.getOrderId() != null && orderMap.containsKey(r.getOrderId()))
+                r.setOrderNo(orderMap.get(r.getOrderId()).getOrderNo());
+        }
+    }
+
+    /** 补充任务列表关联名称（物料/工位/订单） */
+    private void enrichTask(List<ProductionTask> list) {
+        if (list == null || list.isEmpty()) return;
+        Set<Long> materialIds = list.stream().map(ProductionTask::getMaterialId).filter(Objects::nonNull).collect(Collectors.toSet());
+        Set<Long> stationIds = list.stream().map(ProductionTask::getWorkstationId).filter(Objects::nonNull).collect(Collectors.toSet());
+        Set<Long> orderIds = list.stream().map(ProductionTask::getOrderId).filter(Objects::nonNull).collect(Collectors.toSet());
+        Map<Long, Material> materialMap = materialIds.isEmpty() ? Map.of() :
+                materialMapper.selectBatchIds(materialIds).stream().collect(Collectors.toMap(Material::getId, Function.identity()));
+        Map<Long, Workstation> stationMap = stationIds.isEmpty() ? Map.of() :
+                workstationMapper.selectBatchIds(stationIds).stream().collect(Collectors.toMap(Workstation::getId, Function.identity()));
+        Map<Long, Order> orderMap = orderIds.isEmpty() ? Map.of() :
+                orderMapper.selectBatchIds(orderIds).stream().collect(Collectors.toMap(Order::getId, Function.identity()));
+        for (ProductionTask r : list) {
+            if (r.getMaterialId() != null && materialMap.containsKey(r.getMaterialId()))
+                r.setMaterialName(materialMap.get(r.getMaterialId()).getMaterialName());
+            if (r.getWorkstationId() != null && stationMap.containsKey(r.getWorkstationId()))
+                r.setWorkstationName(stationMap.get(r.getWorkstationId()).getStationName());
+            if (r.getOrderId() != null && orderMap.containsKey(r.getOrderId()))
+                r.setOrderNo(orderMap.get(r.getOrderId()).getOrderNo());
+        }
     }
 }

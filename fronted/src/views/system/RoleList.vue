@@ -43,7 +43,7 @@
       <el-tree
         ref="permTree"
         :data="permTreeData"
-        :props="{ label: 'permissionName', children: 'children' }"
+        :props="{ label: 'permName', children: 'children' }"
         node-key="id"
         show-checkbox
         default-expand-all

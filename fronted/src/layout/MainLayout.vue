@@ -11,13 +11,20 @@
           <el-menu-item index="/material">物料列表</el-menu-item>
           <el-menu-item index="/material/category">物料分类</el-menu-item>
         </el-sub-menu>
-        <el-menu-item index="/order">
-          <el-icon><Document /></el-icon><span>订单管理</span>
-        </el-menu-item>
+        <el-sub-menu index="order">
+          <template #title><el-icon><Document /></el-icon><span>订单管理</span></template>
+          <el-menu-item index="/order">生产订单</el-menu-item>
+          <el-menu-item index="/order/erp-sync">ERP订单同步</el-menu-item>
+        </el-sub-menu>
         <el-sub-menu index="approval">
           <template #title><el-icon><Stamp /></el-icon><span>审批中心</span></template>
           <el-menu-item index="/approval/todo">待办审批</el-menu-item>
+          <el-menu-item index="/approval/launch">发起审批</el-menu-item>
           <el-menu-item index="/approval/template">审批模板</el-menu-item>
+        </el-sub-menu>
+        <el-sub-menu index="purchase">
+          <template #title><el-icon><ShoppingCart /></el-icon><span>采购管理</span></template>
+          <el-menu-item index="/purchase/requisition">采购申请</el-menu-item>
         </el-sub-menu>
         <el-menu-item index="/warehouse">
           <el-icon><House /></el-icon><span>仓库管理</span>
@@ -56,7 +63,7 @@ import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/store/user'
 import { ElMessageBox } from 'element-plus'
-import { Odometer, Box, Document, Stamp, House, Operation, Calendar, Setting, SwitchButton } from '@element-plus/icons-vue'
+import { Odometer, Box, Document, Stamp, House, Operation, Calendar, Setting, SwitchButton, ShoppingCart } from '@element-plus/icons-vue'
 
 const route = useRoute()
 const router = useRouter()

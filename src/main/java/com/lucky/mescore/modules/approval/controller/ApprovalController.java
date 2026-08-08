@@ -6,15 +6,26 @@ import com.lucky.mescore.common.page.PageRequest;
 import com.lucky.mescore.common.page.PageResponse;
 import com.lucky.mescore.common.result.R;
 import com.lucky.mescore.modules.approval.entity.*;
+import com.lucky.mescore.modules.approval.mapper.ApprovalNodeMapper;
 import com.lucky.mescore.modules.approval.mapper.ApprovalProcessMapper;
 import com.lucky.mescore.modules.approval.mapper.ApprovalRecordMapper;
 import com.lucky.mescore.modules.approval.mapper.ApprovalTaskMapper;
 import com.lucky.mescore.modules.approval.service.ApprovalEngineService;
 import com.lucky.mescore.modules.approval.service.ApprovalTemplateService;
+import com.lucky.mescore.common.util.JwtUtil;
+import com.lucky.mescore.modules.order.entity.Order;
+import com.lucky.mescore.modules.order.mapper.OrderMapper;
+import com.lucky.mescore.modules.system.mapper.UserRoleMapper;
+import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @RestController
 @RequiredArgsConstructor
@@ -25,6 +36,10 @@ public class ApprovalController {
     private final ApprovalTaskMapper taskMapper;
     private final ApprovalProcessMapper processMapper;
     private final ApprovalRecordMapper recordMapper;
+    private final ApprovalNodeMapper nodeMapper;
+    private final OrderMapper orderMapper;
+    private final JwtUtil jwtUtil;
+    private final UserRoleMapper userRoleMapper;
 
     @PostMapping("/api/approval/{bizType}/{bizId}")
     public R<Void> submit(@PathVariable String bizType, @PathVariable Long bizId,
@@ -35,10 +50,53 @@ public class ApprovalController {
 
     @GetMapping("/api/approval/todo")
     public R<List<ApprovalTask>> todoList(@RequestParam String assignee) {
-        return R.ok(taskMapper.selectList(new LambdaQueryWrapper<ApprovalTask>()
+        List<ApprovalTask> list = taskMapper.selectList(new LambdaQueryWrapper<ApprovalTask>()
                 .eq(ApprovalTask::getAssignee, assignee)
                 .eq(ApprovalTask::getStatus, "PENDING")
-                .orderByDesc(ApprovalTask::getCreateTime)));
+                .orderByDesc(ApprovalTask::getCreateTime));
+        enrichTasks(list);
+        return R.ok(list);
+    }
+
+    /**
+     * 我的待办：根据当前登录用户的账号及其所属角色解析待办任务。
+     * 审批任务的 assignee 可能为「用户名」或「role:角色ID」，本接口自动合并查询。
+     */
+    @GetMapping("/api/approval/todo/mine")
+    public R<List<ApprovalTask>> myTodoList(@RequestHeader(value = "Authorization", required = false) String authHeader) {
+        if (authHeader == null || authHeader.isBlank()) {
+            return R.ok(java.util.Collections.emptyList());
+        }
+        // 兼容前端直接传 token 与标准 Bearer 前缀两种写法
+        String token = authHeader.startsWith("Bearer ") ? authHeader.substring(7) : authHeader;
+        Long userId = jwtUtil.getUserId(token);
+        Claims claims = jwtUtil.parseToken(token);
+        String username = claims != null ? claims.get("username", String.class) : null;
+
+        java.util.List<String> assignees = new java.util.ArrayList<>();
+        boolean isAdmin = false;
+        if (username != null) assignees.add(username);
+        if (userId != null) {
+            userRoleMapper.selectRoleIdsByUserId(userId).forEach(rid -> assignees.add("role:" + rid));
+            isAdmin = userRoleMapper.selectRoleCodesByUserId(userId).contains("admin");
+        }
+        // 超管（admin 角色）可查看全部待办
+        if (isAdmin) {
+            List<ApprovalTask> list = taskMapper.selectList(new LambdaQueryWrapper<ApprovalTask>()
+                    .eq(ApprovalTask::getStatus, "PENDING")
+                    .orderByDesc(ApprovalTask::getCreateTime));
+            enrichTasks(list);
+            return R.ok(list);
+        }
+        if (assignees.isEmpty()) {
+            return R.ok(java.util.Collections.emptyList());
+        }
+        List<ApprovalTask> list = taskMapper.selectList(new LambdaQueryWrapper<ApprovalTask>()
+                .in(ApprovalTask::getAssignee, assignees)
+                .eq(ApprovalTask::getStatus, "PENDING")
+                .orderByDesc(ApprovalTask::getCreateTime));
+        enrichTasks(list);
+        return R.ok(list);
     }
 
     @GetMapping("/api/approval/done")
@@ -46,6 +104,25 @@ public class ApprovalController {
         return R.ok(recordMapper.selectList(new LambdaQueryWrapper<ApprovalRecord>()
                 .eq(ApprovalRecord::getAssignee, assignee)
                 .orderByDesc(ApprovalRecord::getCreateTime)));
+    }
+
+    /** 补充待办列表的展示字段：当前节点名称、业务单号（订单号） */
+    private void enrichTasks(List<ApprovalTask> list) {
+        if (list == null || list.isEmpty()) return;
+        Set<Long> nodeIds = list.stream().map(ApprovalTask::getNodeId).filter(Objects::nonNull).collect(Collectors.toSet());
+        Set<Long> bizIds = list.stream().filter(t -> "ORDER".equals(t.getBizType()))
+                .map(ApprovalTask::getBizId).filter(Objects::nonNull).collect(Collectors.toSet());
+        Map<Long, String> nodeNameMap = nodeIds.isEmpty() ? Map.of() :
+                nodeMapper.selectBatchIds(nodeIds).stream()
+                        .collect(Collectors.toMap(ApprovalNode::getId, ApprovalNode::getNodeName, (a, b) -> a));
+        Map<Long, Order> orderMap = bizIds.isEmpty() ? Map.of() :
+                orderMapper.selectBatchIds(bizIds).stream().collect(Collectors.toMap(Order::getId, Function.identity()));
+        for (ApprovalTask t : list) {
+            if (t.getNodeId() != null && nodeNameMap.containsKey(t.getNodeId()))
+                t.setNodeName(nodeNameMap.get(t.getNodeId()));
+            if ("ORDER".equals(t.getBizType()) && t.getBizId() != null && orderMap.containsKey(t.getBizId()))
+                t.setBizNo(orderMap.get(t.getBizId()).getOrderNo());
+        }
     }
 
     @PostMapping("/api/approval/{taskId}/approve")

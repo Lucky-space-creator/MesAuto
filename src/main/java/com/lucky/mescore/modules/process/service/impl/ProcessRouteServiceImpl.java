@@ -34,10 +34,13 @@ public class ProcessRouteServiceImpl extends ServiceImpl<ProcessRouteMapper, Pro
     public void saveRouteWithSteps(ProcessRoute route, List<ProcessStep> steps) {
         save(route);
         if (steps != null && !steps.isEmpty()) {
-            steps.forEach(step -> {
+            int i = 1;
+            for (ProcessStep step : steps) {
                 step.setRouteId(route.getId());
+                if (step.getStepSeq() == null) step.setStepSeq(i);
                 stepMapper.insert(step);
-            });
+                i++;
+            }
         }
     }
 
@@ -47,11 +50,14 @@ public class ProcessRouteServiceImpl extends ServiceImpl<ProcessRouteMapper, Pro
         updateById(route);
         if (steps != null) {
             stepMapper.deleteByRouteId(route.getId());
-            steps.forEach(step -> {
+            int i = 1;
+            for (ProcessStep step : steps) {
                 step.setId(null);
                 step.setRouteId(route.getId());
+                if (step.getStepSeq() == null) step.setStepSeq(i);
                 stepMapper.insert(step);
-            });
+                i++;
+            }
         }
     }
 

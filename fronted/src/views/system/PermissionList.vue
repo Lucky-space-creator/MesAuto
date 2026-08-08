@@ -8,14 +8,14 @@
     </template>
 
     <el-table :data="tableData" v-loading="loading" border stripe row-key="id" default-expand-all>
-      <el-table-column prop="permissionName" label="权限名称" />
-      <el-table-column prop="permissionCode" label="权限编码" />
-      <el-table-column prop="permissionType" label="类型" width="100">
+      <el-table-column prop="permName" label="权限名称" />
+      <el-table-column prop="permCode" label="权限编码" />
+      <el-table-column prop="permType" label="类型" width="100">
         <template #default="{ row }">
-          <el-tag>{{ row.permissionType === 'MENU' ? '菜单' : row.permissionType === 'BUTTON' ? '按钮' : '接口' }}</el-tag>
+          <el-tag>{{ row.permType === 'MENU' ? '菜单' : row.permType === 'BUTTON' ? '按钮' : '接口' }}</el-tag>
         </template>
       </el-table-column>
-      <el-table-column prop="permissionUrl" label="URL" />
+      <el-table-column prop="url" label="URL" />
       <el-table-column prop="sort" label="排序" width="70" />
       <el-table-column label="操作" width="160" fixed="right">
         <template #default="{ row }">
@@ -27,16 +27,16 @@
 
     <el-dialog v-model="dialogVisible" :title="form.id ? '编辑权限' : '新增权限'" width="520px">
       <el-form :model="form" label-width="90px">
-        <el-form-item label="权限名称"><el-input v-model="form.permissionName" /></el-form-item>
-        <el-form-item label="权限编码"><el-input v-model="form.permissionCode" /></el-form-item>
+        <el-form-item label="权限名称"><el-input v-model="form.permName" /></el-form-item>
+        <el-form-item label="权限编码"><el-input v-model="form.permCode" /></el-form-item>
         <el-form-item label="类型">
-          <el-select v-model="form.permissionType" style="width: 100%">
+          <el-select v-model="form.permType" style="width: 100%">
             <el-option label="菜单" value="MENU" />
             <el-option label="按钮" value="BUTTON" />
             <el-option label="接口" value="API" />
           </el-select>
         </el-form-item>
-        <el-form-item label="URL"><el-input v-model="form.permissionUrl" /></el-form-item>
+        <el-form-item label="URL"><el-input v-model="form.url" /></el-form-item>
         <el-form-item label="父级ID"><el-input v-model.number="form.parentId" type="number" placeholder="0 表示顶级" /></el-form-item>
         <el-form-item label="排序"><el-input v-model.number="form.sort" type="number" /></el-form-item>
       </el-form>
@@ -57,7 +57,7 @@ import { Plus, Edit, Delete } from '@element-plus/icons-vue'
 const loading = ref(false)
 const tableData = ref([])
 const dialogVisible = ref(false)
-const form = reactive({ id: null, permissionName: '', permissionCode: '', permissionType: 'MENU', permissionUrl: '', parentId: 0, sort: 0 })
+const form = reactive({ id: null, permName: '', permCode: '', permType: 'MENU', url: '', parentId: 0, sort: 0 })
 
 const loadData = async () => {
   loading.value = true
@@ -69,7 +69,7 @@ const loadData = async () => {
 }
 
 const openDialog = (row) => {
-  Object.assign(form, row ? { ...row } : { id: null, permissionName: '', permissionCode: '', permissionType: 'MENU', permissionUrl: '', parentId: 0, sort: 0 })
+  Object.assign(form, row ? { ...row } : { id: null, permName: '', permCode: '', permType: 'MENU', url: '', parentId: 0, sort: 0 })
   dialogVisible.value = true
 }
 
@@ -85,7 +85,7 @@ const handleSubmit = async () => {
 }
 
 const handleDelete = async (row) => {
-  await ElMessageBox.confirm(`确认删除权限「${row.permissionName}」？`, '提示', { type: 'warning' })
+  await ElMessageBox.confirm(`确认删除权限「${row.permName}」？`, '提示', { type: 'warning' })
   await request.delete(`/system/permission/${row.id}`)
   ElMessage.success('删除成功')
   loadData()

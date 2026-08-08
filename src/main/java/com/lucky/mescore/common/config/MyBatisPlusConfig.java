@@ -1,5 +1,6 @@
 package com.lucky.mescore.common.config;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.lucky.mescore.common.page.PageRequest;
 import org.apache.ibatis.executor.Executor;
 import org.apache.ibatis.mapping.BoundSql;
@@ -12,7 +13,7 @@ import org.apache.ibatis.plugin.Signature;
 import org.apache.ibatis.session.ResultHandler;
 import org.apache.ibatis.session.RowBounds;
 import org.apache.ibatis.scripting.defaults.DefaultParameterHandler;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.stereotype.Component;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -23,8 +24,12 @@ import java.util.Properties;
  * MyBatis-Plus 在该内网仓库中的分页插件（PaginationInnerInterceptor）被裁剪，
  * 因此这里自行实现一个基于 MyBatis 原生 Interceptor 的 MySQL 物理分页插件，
  * 对参数中包含 {@link PageRequest} 的查询方法自动进行 count + limit 分页。
+ *
+ * 注意：必须用 @Component 而非 @Configuration。@Configuration 类会被 Spring
+ * 用 CGLIB 代理，导致 MyBatis 在注册插件时反射读取 @Intercepts 注解失败
+ * （CGLIB 子类不继承注解），报 No @Intercepts annotation was found。
  */
-@Configuration
+@Component
 @Intercepts({
         @Signature(type = Executor.class, method = "query",
                 args = {MappedStatement.class, Object.class, RowBounds.class, ResultHandler.class})
@@ -39,22 +44,40 @@ public class MyBatisPlusConfig implements Interceptor {
         MappedStatement ms = (MappedStatement) args[0];
         Object parameter = args[1];
 
-        // 仅对 SELECT 且携带 PageRequest 参数的查询进行分页
-        if (ms.getSqlCommandType() != SqlCommandType.SELECT || !(parameter instanceof PageRequest)) {
+        if (ms.getSqlCommandType() != SqlCommandType.SELECT) {
             return invocation.proceed();
         }
 
-        PageRequest<?> pageRequest = (PageRequest<?>) parameter;
-        long pageNum = Math.max(pageRequest.getPageNum(), 1);
-        long pageSize = Math.max(pageRequest.getPageSize(), 1);
+        // 支持两种分页入参：自定义 PageRequest，以及 MyBatis-Plus 的 IPage
+        PageRequest<?> pageRequest = findPageRequest(parameter);
+        IPage<?> mpPage = pageRequest == null ? findPage(parameter) : null;
+        if (pageRequest == null && mpPage == null) {
+            return invocation.proceed();
+        }
+
+        long pageNum;
+        long pageSize;
+        if (pageRequest != null) {
+            pageNum = Math.max(pageRequest.getPageNum(), 1);
+            pageSize = Math.max(pageRequest.getPageSize(), 1);
+        } else {
+            pageNum = Math.max(mpPage.getCurrent(), 1);
+            pageSize = Math.max(mpPage.getSize(), 1);
+        }
 
         Executor executor = (Executor) invocation.getTarget();
         BoundSql boundSql = ms.getBoundSql(parameter);
         String sql = boundSql.getSql();
 
-        // 1. 执行 count 查询，将总数回写到 PageRequest
+        // 1. 执行 count 查询，将总数回写到分页对象
         long total = executeCount(executor, ms, boundSql, parameter, sql);
-        pageRequest.setTotal(total);
+        if (pageRequest != null) {
+            pageRequest.setTotal(total);
+        } else {
+            mpPage.setTotal(total);
+            mpPage.setCurrent(pageNum);
+            mpPage.setSize(pageSize);
+        }
 
         // 2. 改写原 SQL 追加 LIMIT 分页
         String pageSql = sql + " LIMIT " + (pageNum - 1) * pageSize + ", " + pageSize;
@@ -66,7 +89,45 @@ public class MyBatisPlusConfig implements Interceptor {
         args[1] = parameter;
         args[2] = RowBounds.DEFAULT;
 
-        return invocation.proceed();
+        Object result = invocation.proceed();
+
+        // MyBatis-Plus 的 service.page() 直接从 IPage 取 records，需回填
+        if (mpPage != null && result instanceof java.util.List) {
+            @SuppressWarnings({"unchecked", "rawtypes"})
+            IPage rawPage = mpPage;
+            rawPage.setRecords((java.util.List) result);
+        }
+        return result;
+    }
+
+    /** 从 MyBatis 参数（可能是 ParamMap）中查找 PageRequest */
+    private PageRequest<?> findPageRequest(Object parameter) {
+        if (parameter instanceof PageRequest) {
+            return (PageRequest<?>) parameter;
+        }
+        if (parameter instanceof java.util.Map) {
+            for (Object v : ((java.util.Map<?, ?>) parameter).values()) {
+                if (v instanceof PageRequest) {
+                    return (PageRequest<?>) v;
+                }
+            }
+        }
+        return null;
+    }
+
+    /** 从 MyBatis 参数（可能是 ParamMap）中查找 MyBatis-Plus 的 IPage */
+    private IPage<?> findPage(Object parameter) {
+        if (parameter instanceof IPage) {
+            return (IPage<?>) parameter;
+        }
+        if (parameter instanceof java.util.Map) {
+            for (Object v : ((java.util.Map<?, ?>) parameter).values()) {
+                if (v instanceof IPage) {
+                    return (IPage<?>) v;
+                }
+            }
+        }
+        return null;
     }
 
     private long executeCount(Executor executor, MappedStatement ms, BoundSql boundSql,

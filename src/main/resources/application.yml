@@ -7,7 +7,7 @@ spring:
   datasource:
     type: com.alibaba.druid.pool.DruidDataSource
     druid:
-      url: jdbc:mysql://localhost:3306/mescore?useUnicode=true&characterEncoding=utf8mb4&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+      url: jdbc:mysql://localhost:3306/mescore?useUnicode=true&characterEncoding=UTF-8&connectionCollation=utf8mb4_general_ci&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
       username: root
       password: root
       driver-class-name: com.mysql.cj.jdbc.Driver
@@ -57,6 +57,16 @@ minio:
 jwt:
   secret: mesCore2025SecretKeyForJwtTokenGenerationMustBeLongEnough
   expire-seconds: 7200
+
+mes:
+  # 上游ERP订单同步（模拟）
+  erp-sync:
+    # 定时同步开关，默认关闭；可通过 POST /api/erp/sync/order 手动触发
+    enabled: false
+    # 每次拉取的订单数
+    batch-size: 3
+    # 定时表达式，默认每5分钟
+    cron: 0 */5 * * * ?
 
 knife4j:
   enable: true

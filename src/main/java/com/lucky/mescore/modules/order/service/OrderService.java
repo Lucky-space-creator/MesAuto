@@ -25,4 +25,10 @@ public interface OrderService extends IService<Order> {
     void complete(Long orderId);
 
     void close(Long orderId);
+
+    /** 审批流程结束后的回调：通过则下达，驳回则退回草稿 */
+    void onApprovalFinished(Long orderId, boolean approved);
+
+    /** 查询指定订单在当前状态下允许编辑的字段名列表 */
+    List<String> editableFields(Long orderId);
 }

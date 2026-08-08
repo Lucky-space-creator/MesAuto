@@ -50,11 +50,12 @@
       </template>
     </el-dialog>
 
-    <el-dialog v-model="nodesVisible" title="审批节点" width="600px">
+    <el-dialog v-model="nodesVisible" title="审批节点" width="640px">
       <el-table :data="nodes" border>
+        <el-table-column prop="nodeSeq" label="顺序" width="70" />
         <el-table-column prop="nodeName" label="节点名称" />
-        <el-table-column prop="assignee" label="审批人" />
-        <el-table-column prop="nodeOrder" label="顺序" width="80" />
+        <el-table-column prop="assigneeType" label="审批人类型" width="110" />
+        <el-table-column prop="assigneeExpr" label="审批人/表达式" min-width="160" show-overflow-tooltip />
       </el-table>
     </el-dialog>
   </el-card>

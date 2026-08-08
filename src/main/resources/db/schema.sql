@@ -183,6 +183,8 @@ CREATE TABLE IF NOT EXISTS mes_material (
     material_type   VARCHAR(16)     NOT NULL DEFAULT 'MATERIAL' COMMENT '类型',
     min_stock       DECIMAL(20,4)   DEFAULT 0                COMMENT '最低库存',
     max_stock       DECIMAL(20,4)   DEFAULT 0                COMMENT '最高库存',
+    default_warehouse_id BIGINT     DEFAULT NULL             COMMENT '默认放置仓库ID',
+    default_location_id  BIGINT     DEFAULT NULL             COMMENT '默认放置库位ID',
     status          TINYINT(1)      NOT NULL DEFAULT 1       COMMENT '状态',
     remark          VARCHAR(512)    DEFAULT NULL             COMMENT '备注',
     create_by       VARCHAR(64)     DEFAULT NULL,
@@ -623,13 +625,17 @@ CREATE TABLE IF NOT EXISTS mes_order (
     route_id        BIGINT          DEFAULT NULL             COMMENT '工艺路线ID',
     customer_name   VARCHAR(256)    DEFAULT NULL             COMMENT '客户名称',
     remark          VARCHAR(1024)   DEFAULT NULL             COMMENT '备注',
+    source_type     VARCHAR(16)     NOT NULL DEFAULT 'MANUAL' COMMENT '来源:MANUAL手工/ERP上游同步',
+    source_no       VARCHAR(64)     DEFAULT NULL             COMMENT '上游ERP单号',
+    sync_time       DATETIME        DEFAULT NULL             COMMENT '最近同步时间',
     create_by       VARCHAR(64)     DEFAULT NULL,
     create_time     DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
     update_by       VARCHAR(64)     DEFAULT NULL,
     update_time     DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     deleted         TINYINT(1)      NOT NULL DEFAULT 0,
     PRIMARY KEY (id),
-    UNIQUE KEY uk_tenant_order_no (tenant_id, order_no)
+    UNIQUE KEY uk_tenant_order_no (tenant_id, order_no),
+    UNIQUE KEY uk_tenant_source_no (tenant_id, source_no)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='生产订单';
 
 CREATE TABLE IF NOT EXISTS mes_order_item (
@@ -644,3 +650,27 @@ CREATE TABLE IF NOT EXISTS mes_order_item (
     PRIMARY KEY (id),
     KEY idx_order (order_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='订单明细';
+
+-- ============================================
+-- 九、采购申请管理表
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS mes_purchase_requisition (
+    id              BIGINT          NOT NULL AUTO_INCREMENT  COMMENT '主键',
+    tenant_id       VARCHAR(32)     NOT NULL DEFAULT 'DEFAULT' COMMENT '租户ID',
+    req_no          VARCHAR(64)     NOT NULL                 COMMENT '采购申请单号',
+    title           VARCHAR(256)    DEFAULT NULL             COMMENT '申请主题',
+    material_id     BIGINT          NOT NULL                 COMMENT '采购物料ID',
+    plan_qty        DECIMAL(20,4)   NOT NULL DEFAULT 0       COMMENT '计划采购数量',
+    unit_id         BIGINT          DEFAULT NULL             COMMENT '单位ID',
+    expect_date     DATE            DEFAULT NULL             COMMENT '期望到货日期',
+    req_status      VARCHAR(32)     NOT NULL DEFAULT 'DRAFT' COMMENT '状态',
+    remark          VARCHAR(1024)   DEFAULT NULL             COMMENT '备注',
+    create_by       VARCHAR(64)     DEFAULT NULL,
+    create_time     DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_by       VARCHAR(64)     DEFAULT NULL,
+    update_time     DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted         TINYINT(1)      NOT NULL DEFAULT 0,
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_tenant_req_no (tenant_id, req_no)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='采购申请';

@@ -33,12 +33,16 @@
     <!-- 库存 -->
     <template v-else-if="activeTab === 'inventory'">
       <el-table :data="inventoryData" v-loading="loadingInv" border stripe>
-        <el-table-column prop="materialId" label="物料ID" width="100" />
-        <el-table-column prop="warehouseId" label="仓库ID" width="100" />
+        <el-table-column prop="materialName" label="物料" min-width="140" show-overflow-tooltip />
+        <el-table-column prop="warehouseName" label="仓库" min-width="120" />
+        <el-table-column prop="locationCode" label="库位" width="110" />
         <el-table-column prop="quantity" label="数量" />
-        <el-table-column prop="availableQty" label="可用数量" />
-        <el-table-column prop="lockedQty" label="锁定数量" />
-        <el-table-column prop="batchNo" label="批次" />
+        <el-table-column prop="lockedQuantity" label="锁定数量" />
+        <el-table-column prop="unitName" label="单位" width="90" />
+        <el-table-column prop="status" label="状态" width="90">
+          <template #default="{ row }"><el-tag :type="row.status === 1 ? 'success' : 'info'">{{ row.status === 1 ? '正常' : '冻结' }}</el-tag></template>
+        </el-table-column>
+        <el-table-column prop="updateTime" label="更新时间" width="180" />
       </el-table>
       <el-pagination class="pager" v-model:current-page="invPage.pageNum" v-model:page-size="invPage.pageSize"
         :total="invTotal" :page-sizes="[10,20,50]" layout="total, sizes, prev, pager, next" @change="loadInventory" />
@@ -47,10 +51,13 @@
     <!-- 入库单 -->
     <template v-else-if="activeTab === 'inbound'">
       <el-table :data="inboundData" v-loading="loadingIn" border stripe>
-        <el-table-column prop="orderNo" label="单号" />
-        <el-table-column prop="warehouseId" label="仓库ID" />
-        <el-table-column prop="status" label="状态" />
-        <el-table-column prop="createTime" label="创建时间" />
+        <el-table-column prop="inboundNo" label="入库单号" width="150" />
+        <el-table-column prop="inboundType" label="类型" width="110" />
+        <el-table-column prop="sourceOrderNo" label="来源单号" width="150" />
+        <el-table-column prop="warehouseName" label="仓库" min-width="120" />
+        <el-table-column prop="status" label="状态" width="110" />
+        <el-table-column prop="inboundDate" label="入库日期" width="120" />
+        <el-table-column prop="remark" label="备注" min-width="120" show-overflow-tooltip />
       </el-table>
       <el-pagination class="pager" v-model:current-page="inPage.pageNum" v-model:page-size="inPage.pageSize"
         :total="inTotal" :page-sizes="[10,20,50]" layout="total, sizes, prev, pager, next" @change="loadInbound" />
@@ -59,10 +66,13 @@
     <!-- 出库单 -->
     <template v-else>
       <el-table :data="outboundData" v-loading="loadingOut" border stripe>
-        <el-table-column prop="orderNo" label="单号" />
-        <el-table-column prop="warehouseId" label="仓库ID" />
-        <el-table-column prop="status" label="状态" />
-        <el-table-column prop="createTime" label="创建时间" />
+        <el-table-column prop="outboundNo" label="出库单号" width="150" />
+        <el-table-column prop="outboundType" label="类型" width="110" />
+        <el-table-column prop="sourceOrderNo" label="来源单号" width="150" />
+        <el-table-column prop="warehouseName" label="仓库" min-width="120" />
+        <el-table-column prop="status" label="状态" width="110" />
+        <el-table-column prop="outboundDate" label="出库日期" width="120" />
+        <el-table-column prop="remark" label="备注" min-width="120" show-overflow-tooltip />
       </el-table>
       <el-pagination class="pager" v-model:current-page="outPage.pageNum" v-model:page-size="outPage.pageSize"
         :total="outTotal" :page-sizes="[10,20,50]" layout="total, sizes, prev, pager, next" @change="loadOutbound" />
@@ -84,8 +94,11 @@
     <el-dialog v-model="locVisible" title="库位列表" width="560px">
       <el-table :data="locations" border>
         <el-table-column prop="locationCode" label="库位编码" />
-        <el-table-column prop="locationName" label="库位名称" />
-        <el-table-column prop="capacity" label="容量" />
+        <el-table-column prop="locationType" label="库位类型" />
+        <el-table-column prop="maxCapacity" label="最大容量" />
+        <el-table-column prop="status" label="状态" width="90">
+          <template #default="{ row }"><el-tag :type="row.status === 1 ? 'success' : 'info'">{{ row.status === 1 ? '启用' : '停用' }}</el-tag></template>
+        </el-table-column>
       </el-table>
     </el-dialog>
   </el-card>

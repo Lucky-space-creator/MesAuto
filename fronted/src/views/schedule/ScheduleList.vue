@@ -15,13 +15,15 @@
 
     <template v-if="activeTab === 'plan'">
       <el-table :data="planData" v-loading="loadingPlan" border stripe>
-        <el-table-column prop="planNo" label="计划单号" />
+        <el-table-column prop="planNo" label="计划单号" width="150" />
+        <el-table-column prop="orderNo" label="关联订单" min-width="150" show-overflow-tooltip />
         <el-table-column prop="orderId" label="订单ID" width="100" />
-        <el-table-column prop="planStatus" label="状态" width="100">
+        <el-table-column prop="totalQty" label="总数量" width="100" />
+        <el-table-column prop="completedQty" label="已完成" width="100" />
+        <el-table-column prop="planDate" label="计划日期" width="120" />
+        <el-table-column prop="planStatus" label="状态" width="120">
           <template #default="{ row }"><el-tag>{{ row.planStatus }}</el-tag></template>
         </el-table-column>
-        <el-table-column prop="planStartDate" label="计划开始" />
-        <el-table-column prop="planEndDate" label="计划结束" />
       </el-table>
       <el-pagination class="pager" v-model:current-page="planPage.pageNum" v-model:page-size="planPage.pageSize"
         :total="planTotal" :page-sizes="[10,20,50]" layout="total, sizes, prev, pager, next" @change="loadPlan" />
@@ -29,13 +31,22 @@
 
     <template v-else-if="activeTab === 'task'">
       <el-table :data="taskData" v-loading="loadingTask" border stripe>
-        <el-table-column prop="taskNo" label="任务单号" />
-        <el-table-column prop="orderId" label="订单ID" width="100" />
-        <el-table-column prop="workstationId" label="工位ID" width="100" />
-        <el-table-column prop="taskStatus" label="状态" width="100">
+        <el-table-column prop="taskNo" label="任务单号" width="150" />
+        <el-table-column prop="orderNo" label="关联订单" width="130" show-overflow-tooltip />
+        <el-table-column prop="materialName" label="物料" min-width="140" show-overflow-tooltip />
+        <el-table-column prop="workstationName" label="工位" width="130" />
+        <el-table-column prop="taskStatus" label="状态" width="110">
           <template #default="{ row }"><el-tag :type="taskType(row.taskStatus)">{{ row.taskStatus }}</el-tag></template>
         </el-table-column>
-        <el-table-column prop="planQty" label="计划数量" width="100" />
+        <el-table-column prop="plannedQty" label="计划数量" width="100" />
+        <el-table-column prop="actualQty" label="实际数量" width="100" />
+        <el-table-column prop="defectiveQty" label="不良数量" width="100" />
+        <el-table-column prop="priority" label="优先级" width="90" />
+        <el-table-column prop="planStartTime" label="计划开始" width="150" />
+        <el-table-column prop="planEndTime" label="计划结束" width="150" />
+        <el-table-column prop="actualStartTime" label="实际开始" width="150" />
+        <el-table-column prop="actualEndTime" label="实际结束" width="150" />
+        <el-table-column prop="remark" label="备注" min-width="120" show-overflow-tooltip />
         <el-table-column label="操作" width="220" fixed="right">
           <template #default="{ row }">
             <el-button link type="success" :icon="VideoPlay" @click="startTask(row)">开工</el-button>

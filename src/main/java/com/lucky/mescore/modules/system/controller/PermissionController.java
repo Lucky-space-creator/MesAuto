@@ -50,10 +50,9 @@ public class PermissionController {
         return all.stream()
                 .filter(p -> (parentId == 0L && (p.getParentId() == null || p.getParentId() == 0))
                         || parentId.equals(p.getParentId()))
-                .peek(p -> {
-                    List<Permission> children = buildTree(all, p.getId());
-                    p.setIcon(children.isEmpty() ? null : children.toString());
-                })
+                .peek(p -> p.setChildren(buildTree(all, p.getId())))
+                .sorted(java.util.Comparator.comparing(
+                        Permission::getSort, java.util.Comparator.nullsLast(Integer::compareTo)))
                 .collect(Collectors.toList());
     }
 }

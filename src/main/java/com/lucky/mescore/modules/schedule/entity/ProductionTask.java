@@ -1,5 +1,6 @@
 package com.lucky.mescore.modules.schedule.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.lucky.mescore.common.entity.BaseEntity;
 import lombok.Data;
@@ -30,4 +31,11 @@ public class ProductionTask extends BaseEntity {
     private LocalDateTime actualEndTime;
     private String assignee;
     private String remark;
+
+    @TableField(exist = false)
+    private String materialName;
+    @TableField(exist = false)
+    private String workstationName;
+    @TableField(exist = false)
+    private String orderNo;
 }

@@ -22,8 +22,19 @@
       <el-table-column prop="materialCode" label="物料编码" />
       <el-table-column prop="materialName" label="物料名称" />
       <el-table-column prop="materialSpec" label="规格" />
+      <el-table-column prop="materialType" label="类型" width="90">
+        <template #default="{ row }">
+          <el-tag effect="plain">{{ {PRODUCT:'成品',SEMI:'半成品',RAW:'原材料',AUX:'辅材'}[row.materialType] || row.materialType }}</el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column prop="drawingNo" label="图号" width="110" />
       <el-table-column prop="unitName" label="单位" width="80" />
       <el-table-column prop="categoryName" label="分类" />
+      <el-table-column prop="warehouseName" label="默认仓库" width="110" />
+      <el-table-column prop="locationCode" label="默认库位" width="110" />
+      <el-table-column prop="minStock" label="最小库存" width="90" />
+      <el-table-column prop="maxStock" label="最大库存" width="90" />
+      <el-table-column prop="remark" label="备注" min-width="120" show-overflow-tooltip />
       <el-table-column label="状态" width="90">
         <template #default="{ row }">
           <el-tag :type="row.status === 1 ? 'success' : 'info'">{{ row.status === 1 ? '启用' : '停用' }}</el-tag>
@@ -52,8 +63,38 @@
         <el-form-item label="物料编码"><el-input v-model="form.materialCode" /></el-form-item>
         <el-form-item label="物料名称"><el-input v-model="form.materialName" /></el-form-item>
         <el-form-item label="规格"><el-input v-model="form.materialSpec" /></el-form-item>
-        <el-form-item label="单位"><el-input v-model="form.unitName" /></el-form-item>
-        <el-form-item label="分类ID"><el-input v-model.number="form.categoryId" type="number" /></el-form-item>
+        <el-form-item label="图号"><el-input v-model="form.drawingNo" /></el-form-item>
+        <el-form-item label="类型">
+          <el-select v-model="form.materialType" style="width:100%">
+            <el-option label="成品" value="PRODUCT" />
+            <el-option label="半成品" value="SEMI" />
+            <el-option label="原材料" value="RAW" />
+            <el-option label="辅材" value="AUX" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="单位">
+          <el-select v-model="form.primaryUnitId" filterable placeholder="选择单位" style="width:100%">
+            <el-option v-for="u in units" :key="u.id" :label="`${u.unitName}(${u.unitCode})`" :value="u.id" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="分类">
+          <el-select v-model="form.categoryId" filterable placeholder="选择分类" style="width:100%">
+            <el-option v-for="c in categories" :key="c.id" :label="c.categoryName" :value="c.id" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="默认仓库">
+          <el-select v-model="form.defaultWarehouseId" filterable placeholder="选择仓库" style="width:100%"
+            @change="onWarehouseChange">
+            <el-option v-for="w in warehouses" :key="w.id" :label="`${w.warehouseCode} ${w.warehouseName}`" :value="w.id" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="默认库位">
+          <el-select v-model="form.defaultLocationId" filterable placeholder="选择库位" style="width:100%" :disabled="!form.defaultWarehouseId">
+            <el-option v-for="l in locations" :key="l.id" :label="`${l.locationCode}`" :value="l.id" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="最小库存"><el-input v-model.number="form.minStock" type="number" /></el-form-item>
+        <el-form-item label="最大库存"><el-input v-model.number="form.maxStock" type="number" /></el-form-item>
         <el-form-item label="状态">
           <el-switch v-model="form.status" :active-value="1" :inactive-value="0" />
         </el-form-item>
@@ -79,7 +120,14 @@ const page = reactive({ pageNum: 1, pageSize: 10 })
 const query = reactive({ materialCode: '', materialName: '' })
 
 const dialogVisible = ref(false)
-const form = reactive({ id: null, materialCode: '', materialName: '', materialSpec: '', unitName: '', categoryId: null, status: 1 })
+const form = reactive({ id: null, materialCode: '', materialName: '', materialSpec: '', drawingNo: '',
+  materialType: 'RAW', primaryUnitId: null, categoryId: null, minStock: 0, maxStock: 0,
+  defaultWarehouseId: null, defaultLocationId: null, status: 1 })
+
+const units = ref([])
+const categories = ref([])
+const warehouses = ref([])
+const locations = ref([])
 
 const loadData = async () => {
   loading.value = true
@@ -96,6 +144,23 @@ const loadData = async () => {
   }
 }
 
+const loadUnits = async () => {
+  units.value = await request.get('/unit/all')
+}
+
+const loadCategories = async () => {
+  categories.value = await request.get('/material/category/all')
+}
+
+const loadWarehouses = async () => {
+  warehouses.value = await request.get('/warehouse/all')
+}
+
+const onWarehouseChange = async (whId) => {
+  form.defaultLocationId = null
+  locations.value = whId ? await request.get(`/warehouse/${whId}/locations`) : []
+}
+
 const resetQuery = () => {
   query.materialCode = ''
   query.materialName = ''
@@ -104,7 +169,15 @@ const resetQuery = () => {
 }
 
 const openDialog = (row) => {
-  Object.assign(form, row ? { ...row } : { id: null, materialCode: '', materialName: '', materialSpec: '', unitName: '', categoryId: null, status: 1 })
+  const base = { id: null, materialCode: '', materialName: '', materialSpec: '', drawingNo: '',
+    materialType: 'RAW', primaryUnitId: null, categoryId: null, minStock: 0, maxStock: 0,
+    defaultWarehouseId: null, defaultLocationId: null, status: 1 }
+  Object.assign(form, row ? { ...row } : base)
+  if (row && row.defaultWarehouseId) {
+    onWarehouseChange(row.defaultWarehouseId)
+  } else {
+    locations.value = []
+  }
   dialogVisible.value = true
 }
 
@@ -126,7 +199,7 @@ const handleDelete = async (row) => {
   loadData()
 }
 
-onMounted(loadData)
+onMounted(() => { loadData(); loadUnits(); loadCategories(); loadWarehouses() })
 </script>
 
 <style scoped>

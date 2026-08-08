@@ -1,7 +1,7 @@
 spring:
   datasource:
     druid:
-      url: jdbc:mysql://prod-db:3306/mescore?useUnicode=true&characterEncoding=utf8mb4&useSSL=true&serverTimezone=Asia/Shanghai
+      url: jdbc:mysql://prod-db:3306/mescore?useUnicode=true&characterEncoding=UTF-8&connectionCollation=utf8mb4_general_ci&useSSL=true&serverTimezone=Asia/Shanghai
       username: ${DB_USERNAME:}
       password: ${DB_PASSWORD:}
 

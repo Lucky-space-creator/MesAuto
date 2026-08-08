@@ -5,6 +5,8 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.lucky.mescore.common.page.PageRequest;
 import com.lucky.mescore.common.page.PageResponse;
 import com.lucky.mescore.common.result.R;
+import com.lucky.mescore.modules.material.entity.Material;
+import com.lucky.mescore.modules.material.mapper.MaterialMapper;
 import com.lucky.mescore.modules.process.entity.ProcessRoute;
 import com.lucky.mescore.modules.process.entity.ProcessStep;
 import com.lucky.mescore.modules.process.service.ProcessRouteService;
@@ -12,6 +14,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/process-route")
@@ -19,6 +26,7 @@ import java.util.List;
 public class ProcessRouteController {
 
     private final ProcessRouteService routeService;
+    private final MaterialMapper materialMapper;
 
     @PostMapping("/page")
     public R<PageResponse<ProcessRoute>> page(@RequestBody PageRequest<ProcessRoute> request) {
@@ -32,12 +40,15 @@ public class ProcessRouteController {
         }
         qw.orderByDesc(ProcessRoute::getCreateTime);
         Page<ProcessRoute> page = routeService.page(new Page<>(request.getPageNum(), request.getPageSize()), qw);
+        enrich(page.getRecords());
         return R.ok(PageResponse.of(page.getTotal(), page.getCurrent(), page.getSize(), page.getRecords()));
     }
 
     @GetMapping("/{id}")
     public R<ProcessRoute> getById(@PathVariable Long id) {
-        return R.ok(routeService.getById(id));
+        ProcessRoute route = routeService.getById(id);
+        enrich(List.of(route));
+        return R.ok(route);
     }
 
     @GetMapping("/{id}/steps")
@@ -54,7 +65,7 @@ public class ProcessRouteController {
 
     @PostMapping
     public R<ProcessRoute> create(@RequestBody ProcessRoute route) {
-        routeService.saveRouteWithSteps(route, null);
+        routeService.saveRouteWithSteps(route, route.getSteps());
         return R.ok(route);
     }
 
@@ -88,5 +99,20 @@ public class ProcessRouteController {
         route.setId(id);
         routeService.updateRouteWithSteps(route, steps);
         return R.ok();
+    }
+
+    /** 补充前端展示用的关联物料名称，不影响持久化 */
+    private void enrich(List<ProcessRoute> routes) {
+        if (routes == null || routes.isEmpty()) return;
+        Set<Long> materialIds = routes.stream().map(ProcessRoute::getMaterialId)
+                .filter(Objects::nonNull).collect(Collectors.toSet());
+        Map<Long, Material> materialMap = materialIds.isEmpty() ? Map.of() :
+                materialMapper.selectBatchIds(materialIds).stream()
+                        .collect(Collectors.toMap(Material::getId, Function.identity()));
+        for (ProcessRoute r : routes) {
+            if (r.getMaterialId() != null && materialMap.containsKey(r.getMaterialId())) {
+                r.setMaterialName(materialMap.get(r.getMaterialId()).getMaterialName());
+            }
+        }
     }
 }

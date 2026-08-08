@@ -1,5 +1,6 @@
 package com.lucky.mescore.modules.warehouse.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.lucky.mescore.common.entity.BaseEntity;
 import lombok.Data;
@@ -19,4 +20,7 @@ public class InboundOrder extends BaseEntity {
     private String status;
     private LocalDate inboundDate;
     private String remark;
+
+    @TableField(exist = false)
+    private String warehouseName;
 }

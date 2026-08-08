@@ -138,7 +138,8 @@ INSERT INTO sys_serial_number (tenant_id, prefix, biz_type, date_part, current_s
 ('DEFAULT', 'MI',   'INBOUND',  DATE_FORMAT(NOW(),'%Y%m%d'), 0),
 ('DEFAULT', 'MOUT', 'OUTBOUND', DATE_FORMAT(NOW(),'%Y%m%d'), 0),
 ('DEFAULT', 'PR',   'PROCESS_ROUTE', DATE_FORMAT(NOW(),'%Y%m%d'), 0),
-('DEFAULT', 'AT',   'APPROVAL_TEMPLATE', DATE_FORMAT(NOW(),'%Y%m%d'), 0);
+('DEFAULT', 'AT',   'APPROVAL_TEMPLATE', DATE_FORMAT(NOW(),'%Y%m%d'), 0),
+('DEFAULT', 'PRQ',  'PURCHASE', DATE_FORMAT(NOW(),'%Y%m%d'), 0);
 
 -- ============================================
 -- 五、基础数据初始化
@@ -213,3 +214,11 @@ INSERT INTO mes_approval_template (id, tenant_id, template_code, template_name, 
 INSERT INTO mes_approval_node (template_id, node_seq, node_name, assignee_type, assignee_id) VALUES
 (2, 10, '生产经理审批', 'ROLE', 2),
 (2, 20, '质量经理审批', 'ROLE', 5);
+
+-- 采购申请审批模板（默认发布）
+INSERT INTO mes_approval_template (id, tenant_id, template_code, template_name, biz_type, biz_category, priority, is_default, status) VALUES
+(3, 'DEFAULT', 'PURCHASE_NORMAL', '标准采购申请审批', 'PURCHASE', 'NORMAL', 10, 1, 'PUBLISHED');
+
+INSERT INTO mes_approval_node (template_id, node_seq, node_name, assignee_type, assignee_id) VALUES
+(3, 10, '采购主管审批', 'ROLE', 2),
+(3, 20, '财务审批', 'ROLE', 3);
