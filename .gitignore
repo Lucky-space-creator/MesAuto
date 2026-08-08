@@ -1,0 +1,38 @@
+# ===== Java / Maven 构建产物 =====
+target/
+*.class
+*.jar
+*.war
+*.log
+
+# ===== 前端依赖与构建产物 =====
+fronted/node_modules/
+fronted/dist/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ===== IDE =====
+.idea/
+*.iml
+.vscode/
+.settings/
+.project
+.classpath
+.factorypath
+
+# ===== 编辑器 / 系统 =====
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ===== 运行 / 临时文件 =====
+*.tmp
+*.temp
+.codebuddy/
+*.bak
+
+# ===== 本地环境配置（按需保留，此处忽略避免泄露） =====
+# src/main/resources/application-local.yml
+# src/main/resources/application-local.properties
